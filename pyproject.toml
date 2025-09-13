@@ -1,0 +1,13 @@
+[project]
+name = "cresus-bot"
+version = "0.1.0"
+description = "Cresus Craft Official Discord Bot"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dotenv>=0.9.9",
+    "logging>=0.4.9.6",
+    "loguru>=0.7.3",
+    "nextcord>=2.6.0",
+    "ruff>=0.13.0",
+]
