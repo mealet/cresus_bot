@@ -6,6 +6,15 @@ from loguru import logger
 import nextcord
 from nextcord.ext import commands
 
+"""
+Классический пинговщик для проверки состояния и работоспособности бота.
+
+Команды:
+    * /ping
+      |-- Стандартная команда, которая возвращает эфемеральное (видно только пользователю) сообщение о работоспособности бота.
+      |-- Доступно для модерационных ролей (config.MODERATION_ROLES)
+"""
+
 
 class Ping(commands.Cog):
     def __init__(self, bot):
