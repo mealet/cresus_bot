@@ -17,11 +17,6 @@ Cresus Bot
 """
 
 import src
-import dotenv
-import loguru
 
 if __name__ == "__main__":
-    dotenv.load_dotenv(".env")
-    loguru.logger.info("Starting up...")
-
     src.main()
