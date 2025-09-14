@@ -12,6 +12,8 @@ from nextcord.ext import commands
 from loguru import logger
 from . import config
 
+import os
+
 bot = commands.Bot(command_prefix=config.COMMAND_PREFIX, intents=config.INTENTS)
 
 
@@ -42,6 +44,15 @@ async def on_ready():
 
 
 def main():
+    # Логирование в специальный файл
+    os.makedirs(".logs", exist_ok=True)
+    logger.add(
+        ".logs/{time:DD.MM.YYYY}.log",
+        rotation="10 MB",
+        retention="30 days",
+        compression="zip",
+    )
+
     logger.debug("Setting up...")
 
     if config.BOT_TOKEN is None:
