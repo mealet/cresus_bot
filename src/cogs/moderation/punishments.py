@@ -1,5 +1,4 @@
-from .. import config
-from .. import filters
+from src import config, filters
 
 import nextcord
 import datetime

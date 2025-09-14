@@ -1,4 +1,4 @@
 from .__main__ import main
-from . import config, moderation
+from . import config, cogs
 
-__all__ = ["main", "config", "moderation"]
+__all__ = ["main", "config", "cogs"]

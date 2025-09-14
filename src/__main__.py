@@ -25,8 +25,8 @@ async def on_ready():
         модульные файлы для структуризации проекта. При добавлении нового нужно обязательно
         вписать его ниже через `bot.load_extension("src.DIRECTORY.MODULE")`
         """
-        bot.load_extension("src.moderation.ping")
-        bot.load_extension("src.moderation.punishments")
+        bot.load_extension("src.cogs.moderation.ping")
+        bot.load_extension("src.cogs.moderation.punishments")
     except Exception as exception:
         logger.error(f"Extension setup error: {exception}")
         exit()
