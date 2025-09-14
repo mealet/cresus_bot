@@ -17,24 +17,27 @@ bot = commands.Bot(command_prefix=config.COMMAND_PREFIX, intents=config.INTENTS)
 
 @bot.event
 async def on_ready():
-    logger.info(f"Bot started `{bot.user.name}`")
-
     try:
         """
         Расширения (extensions или cogs) используются для распределения кода на различные
         модульные файлы для структуризации проекта. При добавлении нового нужно обязательно
-        вписать его ниже через `bot.load_extension("MODULE")`
+        вписать его ниже через `bot.load_extension("src.DIRECTORY.MODULE")`
         """
-        bot.load_extension("moderation.ping")
+        bot.load_extension("src.moderation.ping")
     except Exception as exception:
         logger.error(f"Extension setup error: {exception}")
         exit()
 
-    logger.info("Extensions loaded")
+    logger.debug("Extensions loaded")
+
+    await bot.sync_all_application_commands()
+    logger.debug("Application commands synced")
 
     await bot.change_presence(
         status=config.PRESENCE_STATUS, activity=config.PRESENCE_ACTIVITY
     )
+
+    logger.info(f"Bot started `{bot.user.name}`")
 
 
 def main():
@@ -65,4 +68,4 @@ def main():
         exit()
 
     logger.info("Token fetched, starting bot...")
-    bot.run(config.BOT_TOKEN)
+    bot.run(config.BOT_TOKEN, reconnect=True)

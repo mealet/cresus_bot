@@ -23,11 +23,28 @@ class Ping(commands.Cog):
     @nextcord.slash_command(name="ping", guild_ids=config.GUILD_IDS)
     @filters.has_any_role([config.MODERATION_ROLES])
     async def ping_handler(self, interaction: nextcord.Interaction):
-        logger.debug(f"Ping call handled from {interaction.user.name}")
+        latency = round(interaction.client.latency * 1000)
+        status = ""
+        color = nextcord.Color.default()
 
-        await interaction.response.send_message(
-            "Бот работает исправно!", ephemeral=True
-        )
+        if latency < 100:
+            color = nextcord.Color.green()
+            status = "✅ Отличное соединение"
+        elif latency < 200:
+            color = nextcord.Color.orange()
+            status = "⚠️ Нормальное соединение"
+        else:
+            color = nextcord.Color.red()
+            status = "❗ Высокая задержка"
+
+        embed = nextcord.Embed(title="😴 Статус бота", color=color)
+
+        embed.add_field(name="Задержка", value=f"{latency} мс", inline=False)
+        embed.add_field(name="Статус", value=status, inline=False)
+
+        logger.debug(f"{interaction.user.name} called `/ping`: {latency} ms")
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 def setup(bot):
