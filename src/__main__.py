@@ -24,6 +24,7 @@ async def on_ready():
         вписать его ниже через `bot.load_extension("src.DIRECTORY.MODULE")`
         """
         bot.load_extension("src.moderation.ping")
+        bot.load_extension("src.moderation.punishments")
     except Exception as exception:
         logger.error(f"Extension setup error: {exception}")
         exit()
@@ -37,11 +38,11 @@ async def on_ready():
         status=config.PRESENCE_STATUS, activity=config.PRESENCE_ACTIVITY
     )
 
-    logger.info(f"Bot started `{bot.user.name}`")
+    logger.success(f"Bot started `{bot.user.name}`")
 
 
 def main():
-    logger.info("Setting up...")
+    logger.debug("Setting up...")
 
     if config.BOT_TOKEN is None:
         """
@@ -67,5 +68,5 @@ def main():
         logger.error("Unable to fetch bot token from environment, exiting...")
         exit()
 
-    logger.info("Token fetched, starting bot...")
+    logger.debug("Token fetched, starting bot...")
     bot.run(config.BOT_TOKEN, reconnect=True)

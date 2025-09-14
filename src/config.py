@@ -9,9 +9,7 @@ dotenv.load_dotenv(DOTENV_FILE)
 BOT_TOKEN = os.environ.get("CRESUS_BOT_TOKEN")
 COMMAND_PREFIX = "!"
 
-INTENTS = nextcord.Intents.default()
-INTENTS.message_content = True
-INTENTS.members = True
+INTENTS = nextcord.Intents.all()
 
 PRESENCE_STATUS = nextcord.Status.online
 PRESENCE_ACTIVITY = nextcord.Game(name="Пашет на заводе")

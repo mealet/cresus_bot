@@ -1,10 +1,10 @@
 from .. import config
 from .. import filters
 
-from loguru import logger
-
 import nextcord
 from nextcord.ext import commands
+from loguru import logger
+
 
 """
 Классический пинговщик для проверки состояния и работоспособности бота.
@@ -42,7 +42,9 @@ class Ping(commands.Cog):
         embed.add_field(name="Задержка", value=f"{latency} мс", inline=False)
         embed.add_field(name="Статус", value=status, inline=False)
 
-        logger.debug(f"{interaction.user.name} called `/ping`: {latency} ms")
+        logger.info(
+            f"`{interaction.user.name} ({interaction.user.id})` called `/ping`: {latency} ms"
+        )
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
