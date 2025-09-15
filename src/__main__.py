@@ -10,6 +10,7 @@
 
 from nextcord.ext import commands
 from loguru import logger
+from .database import db_singleton, client
 from . import config
 
 import os
@@ -33,8 +34,15 @@ async def on_ready():
 
     logger.debug("Extensions loaded")
 
+    """Синхронизация слэш комманд и application комманд"""
     await bot.sync_all_application_commands()
     logger.debug("Application commands synced")
+
+    """Установка singleton для базы данных и инициализация таблиц"""
+    db_singleton.initialize(client.SqliteClient, config.SQLITE_DATABASE_PATH)
+    await db_singleton.get_client().init()
+
+    logger.debug("Database initialized")
 
     await bot.change_presence(
         status=config.PRESENCE_STATUS, activity=config.PRESENCE_ACTIVITY
@@ -45,9 +53,9 @@ async def on_ready():
 
 def main():
     # Логирование в специальный файл
-    os.makedirs(".logs", exist_ok=True)
+    os.makedirs(config.LOGS_DIRECTORY, exist_ok=True)
     logger.add(
-        ".logs/{time:DD.MM.YYYY}.log",
+        f"{config.LOGS_DIRECTORY}/{{time:DD.MM.YYYY}}.log",
         rotation="10 MB",
         retention="30 days",
         compression="zip",
