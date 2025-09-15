@@ -1,4 +1,5 @@
-from src import config, filters
+from src import config, filters, utils
+from src.database import db_singleton
 
 import nextcord
 import datetime
@@ -77,7 +78,7 @@ def setup(bot):
 class BanModal(nextcord.ui.Modal):
     def __init__(self, target: nextcord.Member):
         super().__init__(
-            title=f"Бан `{target.name} ({target.nick})`",
+            title=f"Бан `{target.name} ({target.id})`",
             custom_id="moderation_ban_modal",
         )
 
@@ -91,7 +92,12 @@ class BanModal(nextcord.ui.Modal):
             required=True,
         )
 
+        self.time = nextcord.ui.TextInput(
+            label="Укажите время бана", custom_id="time", placeholder="30d, 3h, 12s"
+        )
+
         self.add_item(self.reason)
+        self.add_item(self.time)
 
     async def callback(self, interaction):
         # Embed плажка с информацией о бане
@@ -121,11 +127,16 @@ class BanModal(nextcord.ui.Modal):
         embed_info.set_thumbnail(url=banned_avatar_url)
 
         try:
+            ban_time = utils.parse_time_to_seconds(self.time.value)
+
             await self.target.ban(reason=self.reason.value)
+            await db_singleton.get_client().ban_user(
+                self.target.id, interaction.user.id, self.reason.value, ban_time
+            )
             await interaction.response.send_message(embed=embed_info)
 
             logger.info(
-                f"`{self.target.name} ({self.target.id}) was banned by `{interaction.user.name} ({interaction.user.id})`"
+                f'`{self.target.name} ({self.target.id}) was banned by `{interaction.user.name} ({interaction.user.id})` on "{self.time.value}": {self.reason.value}'
             )
         except Exception as exception:
             await interaction.response.send_message(
