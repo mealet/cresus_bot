@@ -106,7 +106,7 @@ def setup(bot):
 class BanModal(nextcord.ui.Modal):
     def __init__(self, target: nextcord.Member):
         super().__init__(
-            title=f"Бан `{target.name} ({target.id})`",
+            title=f"Бан `{target.name}`",
             custom_id="moderation_ban_modal",
         )
 
@@ -208,7 +208,7 @@ class BanModal(nextcord.ui.Modal):
 class KickModal(nextcord.ui.Modal):
     def __init__(self, target: nextcord.Member):
         super().__init__(
-            title=f"Кик `{target.name} ({target.nick})`",
+            title=f"Кик `{target.name}`",
             custom_id="moderation_kick_modal",
         )
 
