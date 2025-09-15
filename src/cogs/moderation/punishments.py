@@ -35,11 +35,11 @@ class Punishments(commands.Cog):
     async def ban_application(
         self, interaction: nextcord.Interaction, user: nextcord.Member
     ):
-        # if user.id == interaction.user.id:
-        #     await interaction.response.send_message(
-        #         "❌ Нельзя забанить самого себя!", ephemeral=True
-        #     )
-        #     return
+        if user.id == interaction.user.id:
+            await interaction.response.send_message(
+                "❌ Нельзя забанить самого себя!", ephemeral=True
+            )
+            return
 
         if user.bot:
             await interaction.response.send_message(
@@ -69,15 +69,13 @@ class Punishments(commands.Cog):
         await interaction.response.send_modal(BanModal(user))
 
     # Tasks
-    @tasks.loop(minutes=1.0)
+    @tasks.loop(minutes=0.5)
     async def check_bans(self):
-        # WARNING: Requires real tests
-
         guild = self.bot.get_guild(config.GUILD_ID)
         unban_users_ids = await db_singleton.get_client().update_bans()
 
         for user_id in unban_users_ids:
-            discord_user = self.bot.fetch_user(user_id)
+            discord_user = await self.bot.fetch_user(user_id)
 
             try:
                 logger.info(
@@ -126,18 +124,51 @@ class BanModal(nextcord.ui.Modal):
             label="Укажите время бана", custom_id="time", placeholder="30d, 3h, 12s"
         )
 
+        self.dm_message = nextcord.ui.TextInput(
+            label="Сообщение пользователю (в личные сообщения)",
+            custom_id="dm_message",
+            placeholder="Можно оставить пустым",
+            style=nextcord.TextInputStyle.paragraph,
+            required=False,
+        )
+
         self.add_item(self.reason)
         self.add_item(self.time)
+        self.add_item(self.dm_message)
 
     async def callback(self, interaction):
-        # Embed плажка с информацией о бане
+        ban_timestamp = datetime.datetime.now()
+
+        # Сообщение пользователю о бане
+        dm_embed = nextcord.Embed(
+            title=f'Вы забанены на сервере "{interaction.guild.name}"',
+            colour=nextcord.Colour.red(),
+            timestamp=ban_timestamp,
+        )
+
+        dm_embed.add_field(
+            name="Информация",
+            value=f'Вы были временно заблокированы на сервере "{interaction.guild.name}" по решению модерации. Если вы несогласны с данным решением - пожалуйста обратитесь к руководству сервера.\n - **Модератор:** {interaction.user.mention}\n - **Срок:** {self.time.value}\n - **Причина:** {self.reason.value}',
+            inline=False,
+        )
+
+        if self.dm_message.value:
+            dm_embed.add_field(
+                name=f"Сообщение от модератора `{interaction.user.name}`",
+                value=f"```\n{self.dm_message.value}\n```",
+                inline=False,
+            )
+
+        await self.target.send(embed=dm_embed)
+
+        # Сообщение в чат о бане
         embed_info = nextcord.Embed(
-            colour=nextcord.Colour.red(), timestamp=datetime.datetime.now()
+            colour=nextcord.Colour.red(), timestamp=ban_timestamp
         )
 
         embed_info.add_field(
-            name="Пользователь забанен",
-            value=f"Пользователь: {self.target.mention}\nПричина: {self.reason.value}",
+            name="Пользователь временно заблокирован",
+            value=f" - **Пользователь:** {self.target.mention}\n - **Срок:** {self.time.value}\n - **Причина:** {self.reason.value}",
         )
 
         # Проверка на наличие аватарки (если нет - заменяем на свою)
@@ -159,7 +190,7 @@ class BanModal(nextcord.ui.Modal):
         try:
             ban_time = utils.parse_time_to_seconds(self.time.value)
 
-            # await self.target.ban(reason=self.reason.value)
+            await self.target.ban(reason=self.reason.value)
             await db_singleton.get_client().ban_user(
                 self.target.id, interaction.user.id, self.reason.value, ban_time
             )
