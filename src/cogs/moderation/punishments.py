@@ -4,7 +4,7 @@ from src.database import db_singleton
 import nextcord
 import datetime
 
-from nextcord.ext import commands
+from nextcord.ext import commands, tasks
 from loguru import logger
 
 """
@@ -27,16 +27,19 @@ class Punishments(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @nextcord.user_command(name="Ban", guild_ids=config.GUILD_IDS)
+        # Tasks
+        self.check_bans.start()
+
+    @nextcord.user_command(name="Ban", guild_ids=[config.GUILD_ID])
     @filters.has_any_role([config.MODERATION_ROLES])
     async def ban_application(
         self, interaction: nextcord.Interaction, user: nextcord.Member
     ):
-        if user.id == interaction.user.id:
-            await interaction.response.send_message(
-                "❌ Нельзя забанить самого себя!", ephemeral=True
-            )
-            return
+        # if user.id == interaction.user.id:
+        #     await interaction.response.send_message(
+        #         "❌ Нельзя забанить самого себя!", ephemeral=True
+        #     )
+        #     return
 
         if user.bot:
             await interaction.response.send_message(
@@ -46,7 +49,7 @@ class Punishments(commands.Cog):
 
         await interaction.response.send_modal(BanModal(user))
 
-    @nextcord.user_command(name="Kick", guild_ids=config.GUILD_IDS)
+    @nextcord.user_command(name="Kick", guild_ids=[config.GUILD_ID])
     @filters.has_any_role([config.MODERATION_ROLES])
     async def kick_application(
         self, interaction: nextcord.Interaction, user: nextcord.Member
@@ -64,6 +67,33 @@ class Punishments(commands.Cog):
             return
 
         await interaction.response.send_modal(BanModal(user))
+
+    # Tasks
+    @tasks.loop(minutes=1.0)
+    async def check_bans(self):
+        # WARNING: Requires real tests
+
+        guild = self.bot.get_guild(config.GUILD_ID)
+        unban_users_ids = await db_singleton.get_client().update_bans()
+
+        for user_id in unban_users_ids:
+            discord_user = self.bot.fetch_user(user_id)
+
+            try:
+                logger.info(
+                    f"User's `{discord_user.name} ({discord_user.id})` ban expired"
+                )
+                await guild.unban(discord_user)
+            except Exception as exception:
+                logger.error(
+                    f"Unban of `{discord_user.name} ({discord_user.id})` threw an exception: {exception}"
+                )
+
+        return
+
+    @check_bans.before_loop
+    async def before_check_bans(self):
+        await self.bot.wait_until_ready()
 
 
 def setup(bot):
@@ -129,7 +159,7 @@ class BanModal(nextcord.ui.Modal):
         try:
             ban_time = utils.parse_time_to_seconds(self.time.value)
 
-            await self.target.ban(reason=self.reason.value)
+            # await self.target.ban(reason=self.reason.value)
             await db_singleton.get_client().ban_user(
                 self.target.id, interaction.user.id, self.reason.value, ban_time
             )

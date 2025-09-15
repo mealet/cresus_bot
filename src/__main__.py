@@ -20,6 +20,10 @@ bot = commands.Bot(command_prefix=config.COMMAND_PREFIX, intents=config.INTENTS)
 
 @bot.event
 async def on_ready():
+    """Установка singleton для базы данных и инициализация таблиц"""
+    db_singleton.initialize(client.SqliteClient, config.SQLITE_DATABASE_PATH)
+    await db_singleton.get_client().init()
+
     try:
         """
         Расширения (extensions или cogs) используются для распределения кода на различные
@@ -37,10 +41,6 @@ async def on_ready():
     """Синхронизация слэш комманд и application комманд"""
     await bot.sync_all_application_commands()
     logger.debug("Application commands synced")
-
-    """Установка singleton для базы данных и инициализация таблиц"""
-    db_singleton.initialize(client.SqliteClient, config.SQLITE_DATABASE_PATH)
-    await db_singleton.get_client().init()
 
     logger.debug("Database initialized")
 

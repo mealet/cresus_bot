@@ -19,7 +19,7 @@ class Ping(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @nextcord.slash_command(name="ping", guild_ids=config.GUILD_IDS)
+    @nextcord.slash_command(name="ping", guild_ids=[config.GUILD_ID])
     @filters.has_any_role([config.MODERATION_ROLES])
     async def ping_handler(self, interaction: nextcord.Interaction):
         latency = round(interaction.client.latency * 1000)

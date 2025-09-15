@@ -80,30 +80,24 @@ class SqliteClient(DatabaseClient):
     async def update_bans(self) -> list[int]:
         outdated_ids = []
 
-        try:
-            async with aiosqlite.connect(self.path) as db:
-                db.row_factory = aiosqlite.Row
-                current_timestamp = int(datetime.datetime.now().timestamp())
+        async with aiosqlite.connect(self.path) as db:
+            db.row_factory = aiosqlite.Row
+            current_timestamp = int(datetime.datetime.now().timestamp())
 
-                async with db.execute(
-                    "SELECT * FROM `bans` WHERE ? >= until", (current_timestamp)
-                ) as cursor:
-                    outdated_records = await cursor.fetchall()
+            async with db.execute(
+                "SELECT * FROM `bans` WHERE ? >= until", (current_timestamp,)
+            ) as cursor:
+                outdated_records = await cursor.fetchall()
 
-                outdated_ids = [record["user_id"] for record in outdated_records]
+            outdated_ids = [record["user_id"] for record in outdated_records]
 
-                if outdated_ids:
-                    placeholders = ",".join("?" * len(outdated_ids))
+            if outdated_ids:
+                placeholders = ",".join("?" * len(outdated_ids))
 
-                    await db.execute(
-                        f"DELETE FROM bans WHERE user_id IN ({placeholders})",
-                        outdated_ids,
-                    )
-                    await db.commit()
-
-        except aiosqlite.Error as error:
-            logger.error(f"Sqlite client error: {error}")
-        except Exception as exception:
-            logger.error(f"Exception int Sqlite client: {exception}")
+                await db.execute(
+                    f"DELETE FROM bans WHERE user_id IN ({placeholders})",
+                    outdated_ids,
+                )
+                await db.commit()
 
         return outdated_ids
