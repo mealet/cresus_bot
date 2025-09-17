@@ -49,6 +49,57 @@ class Punishments(commands.Cog):
 
         await interaction.response.send_modal(BanModal(user))
 
+    @nextcord.slash_command(name="ban", guild_ids=[config.GUILD_ID])
+    @filters.has_any_role([config.MODERATION_ROLES])
+    async def ban_handler(self, interaction: nextcord.Interaction, user: nextcord.User):
+        if user.id == interaction.user.id:
+            await interaction.response.send_message(
+                "❌ Нельзя забанить самого себя!", ephemeral=True
+            )
+            return
+
+        if user.bot:
+            await interaction.response.send_message(
+                "❌ Нельзя забанить бота!", ephemeral=True
+            )
+            return
+
+        await interaction.response.send_modal(BanModal(user))
+
+    @nextcord.slash_command(name="unban", guild_ids=[config.GUILD_ID])
+    @filters.has_any_role([config.MODERATION_ROLES])
+    async def unban_handler(
+        self,
+        interaction: nextcord.Interaction,
+        user: nextcord.User = nextcord.SlashOption(
+            name="пользователь",
+            description="Укажите ID или упомяните пользователя",
+            required=True,
+        ),
+    ):
+        if user.id == interaction.user.id:
+            await interaction.response.send_message(
+                "❌ Нельзя изменять состояние бана для себя!", ephemeral=True
+            )
+            return
+
+        guild = interaction.guild
+        unbanned_user = await db_singleton.get_client().unban_user(user_id=user.id)
+
+        if unbanned_user is None:
+            ban_entries = [entry async for entry in guild.bans()]
+            if any(ban.user.id == user.id for ban in ban_entries):
+                await interaction.response.send_message(
+                    "❌ Пользователь не находится в бане!", ephemeral=True
+                )
+                return
+
+        await guild.unban(user)
+        await interaction.response.send_message(
+            f"✅ Пользователь {user.mention} был разбанен на данном сервере!",
+            ephemeral=True,
+        )
+
     @nextcord.user_command(name="Kick", guild_ids=[config.GUILD_ID])
     @filters.has_any_role([config.MODERATION_ROLES])
     async def kick_application(
@@ -159,7 +210,12 @@ class BanModal(nextcord.ui.Modal):
                 inline=False,
             )
 
-        await self.target.send(embed=dm_embed)
+        try:
+            await self.target.send(embed=dm_embed)
+        except Exception as exception:
+            logger.warning(
+                f"Unable to send ban message to `{self.target.name} ({self.target.id})`: {exception}"
+            )
 
         # Сообщение в чат о бане
         embed_info = nextcord.Embed(

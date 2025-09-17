@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from loguru import logger
 
 import aiosqlite
 import datetime
@@ -66,14 +65,14 @@ class SqliteClient(DatabaseClient):
     async def unban_user(self, user_id: int) -> int | None:
         async with aiosqlite.connect(self.path) as db:
             async with db.execute(
-                "SELECT 1 FROM `bans` WHERE user_id = ?", (user_id)
+                "SELECT 1 FROM `bans` WHERE user_id = ?", (user_id,)
             ) as cursor:
                 exists = await cursor.fetchone()
 
-        if exists:
-            await db.execute("DELETE FROM `bans` WHERE user_id = ?", (user_id))
-            await db.commit()
-            return user_id
+            if exists:
+                await db.execute("DELETE FROM `bans` WHERE user_id = ?", (user_id,))
+                await db.commit()
+                return user_id
 
         return None
 
