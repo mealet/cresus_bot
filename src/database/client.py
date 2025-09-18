@@ -10,6 +10,16 @@ import datetime
 """
 
 
+# Структура для получения записи о бане
+@dataclass
+class BanRecord:
+    user_id: int
+    moderator_id: int
+    reason: str
+    datetime: int
+    until: int
+
+
 # Абстрактный класс для работы с базой данных
 class DatabaseClient(ABC):
     @abstractmethod
@@ -18,7 +28,7 @@ class DatabaseClient(ABC):
         pass
 
     @abstractmethod
-    async def get_bans(self) -> list[int]:
+    async def get_bans(self) -> list[BanRecord]:
         """Получить список всех существующих банов"""
 
     @abstractmethod
@@ -36,16 +46,6 @@ class DatabaseClient(ABC):
     async def update_bans(self) -> list[int]:
         """Обновление состояний и проверка банов (разбан если уже прошёл)"""
         """Вовзаращает список ID пользователей которые должны быть разбанены"""
-
-
-# Структура для получения записи о бане
-@dataclass
-class BanRecord:
-    user_id: int
-    moderator_id: int
-    reason: str
-    datetime: int
-    until: int
 
 
 # Асихнронный Sqlite Client
