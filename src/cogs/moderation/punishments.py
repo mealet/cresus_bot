@@ -30,6 +30,36 @@ class Punishments(commands.Cog):
         # Tasks
         self.check_bans.start()
 
+    @nextcord.slash_command(name="bans", guild_ids=[config.GUILD_ID])
+    @filters.has_any_role([config.MODERATION_ROLES])
+    async def bans_handler(self, interaction: nextcord.Interaction):
+        bans_list = await db_singleton.get_client().get_bans()
+        bans_embed = nextcord.Embed(title="ℹ️ Список текущих банов")
+
+        for record in bans_list:
+            banned_user = await self.bot.fetch_user(record.user_id)
+            moderator_user = await self.bot.fetch_user(record.moderator_id)
+            ban_datetime = datetime.datetime.fromtimestamp(record.datetime).strftime(
+                "%d.%m.%Y %H:%M:%S"
+            )
+            until_datetime = datetime.datetime.fromtimestamp(record.until).strftime(
+                "%d.%m.%Y %H:%M:%S"
+            )
+
+            embed_value = f"""
+- **Пользователь:** {banned_user.mention}
+- **Модератор:** {moderator_user.mention}
+- **Причина:** {record.reason}
+- **Дата и время:** {ban_datetime}
+- **Окончание:** {until_datetime}
+            """
+
+            bans_embed.add_field(
+                inline=False, name=f"{banned_user.name}", value=embed_value
+            )
+
+        await interaction.response.send_message(embed=bans_embed, ephemeral=True)
+
     @nextcord.user_command(name="Ban", guild_ids=[config.GUILD_ID])
     @filters.has_any_role([config.MODERATION_ROLES])
     async def ban_application(
@@ -47,6 +77,12 @@ class Punishments(commands.Cog):
             )
             return
 
+        if not interaction.guild.get_member(user.id):
+            await interaction.response.send_message(
+                "❌ Пользователя нет на сервере!", ephemeral=True
+            )
+            return
+
         await interaction.response.send_modal(BanModal(user))
 
     @nextcord.slash_command(name="ban", guild_ids=[config.GUILD_ID])
@@ -61,6 +97,12 @@ class Punishments(commands.Cog):
         if user.bot:
             await interaction.response.send_message(
                 "❌ Нельзя забанить бота!", ephemeral=True
+            )
+            return
+
+        if not interaction.guild.get_member(user.id):
+            await interaction.response.send_message(
+                "❌ Пользователя нет на сервере!", ephemeral=True
             )
             return
 

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 import aiosqlite
 import datetime
@@ -9,11 +10,16 @@ import datetime
 """
 
 
+# Абстрактный класс для работы с базой данных
 class DatabaseClient(ABC):
     @abstractmethod
     async def init() -> None:
         """Инициализация клиента и создание полей для работы"""
         pass
+
+    @abstractmethod
+    async def get_bans(self) -> list[int]:
+        """Получить список всех существующих банов"""
 
     @abstractmethod
     async def ban_user(
@@ -32,7 +38,17 @@ class DatabaseClient(ABC):
         """Вовзаращает список ID пользователей которые должны быть разбанены"""
 
 
-# Async Sqlite Client
+# Структура для получения записи о бане
+@dataclass
+class BanRecord:
+    user_id: int
+    moderator_id: int
+    reason: str
+    datetime: int
+    until: int
+
+
+# Асихнронный Sqlite Client
 class SqliteClient(DatabaseClient):
     def __init__(self, path: str):
         self.path = path
@@ -48,6 +64,19 @@ class SqliteClient(DatabaseClient):
             )
             """)
             await db.commit()
+
+    async def get_bans(self) -> list[BanRecord]:
+        bans_list = []
+
+        async with aiosqlite.connect(self.path) as db:
+            async with db.execute("SELECT * FROM `bans`") as cursor:
+                raw_bans = await cursor.fetchall()
+                bans_list = [
+                    BanRecord(record[0], record[1], record[2], record[3], record[4])
+                    for record in raw_bans
+                ]
+
+        return bans_list
 
     async def ban_user(
         self, user_id: int, moderator_id: int, reason: str, seconds: int
