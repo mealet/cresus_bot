@@ -33,6 +33,8 @@ class Punishments(commands.Cog):
     @nextcord.slash_command(name="bans", guild_ids=[config.GUILD_ID])
     @filters.has_any_role([config.MODERATION_ROLES])
     async def bans_handler(self, interaction: nextcord.Interaction):
+        logger.info(f"`{interaction.user.name} ({interaction.user.id})` called `/bans`")
+
         bans_list = await db_singleton.get_client().get_bans()
         bans_embed = nextcord.Embed(title="ℹ️ Список текущих банов")
 
@@ -137,6 +139,11 @@ class Punishments(commands.Cog):
                 return
 
         await guild.unban(user)
+
+        logger.info(
+            f"`{interaction.user.name} ({interaction.user.id})` unbanned `{user.name} ({user.id})`"
+        )
+
         await interaction.response.send_message(
             f"✅ Пользователь {user.mention} был разбанен на данном сервере!",
             ephemeral=True,
