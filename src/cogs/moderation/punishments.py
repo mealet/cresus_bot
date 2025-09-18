@@ -168,6 +168,68 @@ class Punishments(commands.Cog):
 
         await interaction.response.send_modal(BanModal(user))
 
+    @nextcord.slash_command(name="mute", guild_ids=[config.GUILD_ID])
+    @filters.has_any_role([config.MODERATION_ROLES])
+    async def mute_handler(
+        self,
+        interaction: nextcord.Interaction,
+        user: nextcord.Member,
+        time: str,
+        reason: str,
+    ):
+        if user.id == interaction.user.id:
+            await interaction.response.send_message(
+                "❌ Нельзя замьютить самого себя!", ephemeral=True
+            )
+            return
+
+        if user.bot:
+            await interaction.response.send_message(
+                "❌ Нельзя замьютить бота!", ephemeral=True
+            )
+            return
+
+        # Сообщение в чат о мьюте
+        mute_timestamp = datetime.datetime.now()
+
+        embed_info = nextcord.Embed(
+            colour=nextcord.Colour.orange(), timestamp=mute_timestamp
+        )
+
+        embed_info.add_field(
+            name="Пользователь временно замьючен",
+            value=f" - **Пользователь:** {user.mention}\n - **Срок:** {time}\n - **Причина:** {reason}",
+        )
+
+        # Проверка на наличие аватарки (если нет - заменяем на свою)
+        author_avatar_url = (
+            "https://cdn.icon-icons.com/icons2/2108/PNG/512/discord_icon_130958.png"
+            if interaction.user.avatar is None
+            else interaction.user.avatar.url
+        )
+
+        banned_avatar_url = (
+            "https://cdn.icon-icons.com/icons2/2108/PNG/512/discord_icon_130958.png"
+            if user.avatar is None
+            else user.avatar.url
+        )
+
+        embed_info.set_author(name=interaction.user.name, icon_url=author_avatar_url)
+        embed_info.set_thumbnail(url=banned_avatar_url)
+
+        try:
+            mute_seconds = utils.parse_time_to_seconds(time)
+
+            await user.edit(
+                timeout=nextcord.utils.utcnow()
+                + datetime.timedelta(seconds=mute_seconds)
+            )
+            await interaction.response.send_message(embed=embed_info)
+        except Exception as exception:
+            await interaction.response.send_message(
+                f"❌ Произошла ошибка:\n```{exception}```", ephemeral=True
+            )
+
     # Tasks
     @tasks.loop(minutes=0.5)
     async def check_bans(self):
