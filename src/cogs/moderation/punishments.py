@@ -132,7 +132,7 @@ class Punishments(commands.Cog):
 
         if unbanned_user is None:
             ban_entries = [entry async for entry in guild.bans()]
-            if any(ban.user.id == user.id for ban in ban_entries):
+            if not any(ban.user.id == user.id for ban in ban_entries):
                 await interaction.response.send_message(
                     "❌ Пользователь не находится в бане!", ephemeral=True
                 )
@@ -224,7 +224,55 @@ class Punishments(commands.Cog):
                 timeout=nextcord.utils.utcnow()
                 + datetime.timedelta(seconds=mute_seconds)
             )
+
+            logger.info(
+                f'`{interaction.user.name} ({interaction.user.id})` muted `{user.name} ({user.id})` for {time}: "{reason}"'
+            )
+
             await interaction.response.send_message(embed=embed_info)
+        except Exception as exception:
+            await interaction.response.send_message(
+                f"❌ Произошла ошибка:\n```{exception}```", ephemeral=True
+            )
+
+    @nextcord.slash_command(name="unmute", guild_ids=[config.GUILD_ID])
+    @filters.has_any_role([config.MODERATION_ROLES])
+    async def unmute_handler(
+        self, interaction: nextcord.Interaction, user: nextcord.Member
+    ):
+        if user.id == interaction.user.id:
+            await interaction.response.send_message(
+                "❌ Нельзя изменять мьют у себя!", ephemeral=True
+            )
+            return
+
+        if user.bot:
+            await interaction.response.send_message(
+                "❌ Нельзя изменять мьют у бота!", ephemeral=True
+            )
+            return
+
+        if (
+            not user.communication_disabled_until
+            or user.communication_disabled_until
+            < datetime.datetime.now(datetime.timezone.utc)
+        ):
+            await interaction.response.send_message(
+                f"❌ Пользователь {user.mention} не находится в муте!", ephemeral=True
+            )
+            return
+
+        try:
+            await user.edit(timeout=None)
+
+            logger.info(
+                f"`{interaction.user.name} ({interaction.user.id})` unmuted `{user.name} ({user.id})`"
+            )
+
+            await interaction.response.send_message(
+                f"✅ Вы размутили пользователя {user.mention}"
+            )
+
         except Exception as exception:
             await interaction.response.send_message(
                 f"❌ Произошла ошибка:\n```{exception}```", ephemeral=True
