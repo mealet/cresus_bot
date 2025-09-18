@@ -168,6 +168,42 @@ class Punishments(commands.Cog):
 
         await interaction.response.send_modal(BanModal(user))
 
+    @nextcord.slash_command(name="mutes", guild_ids=[config.GUILD_ID])
+    @filters.has_any_role([config.MODERATION_ROLES])
+    async def mutes_handler(self, interaction: nextcord.Interaction):
+        muted_members = []
+
+        for member in interaction.guild.members:
+            if (
+                member.communication_disabled_until
+                and member.communication_disabled_until
+                > datetime.datetime.now(datetime.timezone.utc)
+            ):
+                muted_members.append(member)
+
+        if not muted_members:
+            await interaction.response.send_message(
+                "👌 На сервере нет пользователей с мутом", ephemeral=True
+            )
+
+        embed = nextcord.Embed(
+            title=f"Пользователи с мутом: {len(muted_members)}",
+            color=nextcord.Color.orange(),
+        )
+
+        for member in muted_members:
+            release_datetime = member.communication_disabled_until.strftime(
+                "%d.%m.%Y %H:%M:%S"
+            )
+
+            embed.add_field(
+                name=member.name,
+                value=f"- **Пользователь:** {member.mention}\n- **Осталось:** {release_datetime}",
+                inline=False,
+            )
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
     @nextcord.slash_command(name="mute", guild_ids=[config.GUILD_ID])
     @filters.has_any_role([config.MODERATION_ROLES])
     async def mute_handler(
@@ -222,7 +258,8 @@ class Punishments(commands.Cog):
 
             await user.edit(
                 timeout=nextcord.utils.utcnow()
-                + datetime.timedelta(seconds=mute_seconds)
+                + datetime.timedelta(seconds=mute_seconds),
+                reason=reason,
             )
 
             logger.info(
