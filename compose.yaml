@@ -1,0 +1,7 @@
+services:
+  cresus_bot:
+    build: .
+    volumes:
+      - ./database.db:/app/database.db
+    working_dir: /app
+    command: uv run main.py
