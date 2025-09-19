@@ -341,10 +341,6 @@ class Punishments(commands.Cog):
         await self.bot.wait_until_ready()
 
 
-def setup(bot):
-    bot.add_cog(Punishments(bot))
-
-
 """
 Модальные окна
 """
@@ -513,3 +509,7 @@ class KickModal(nextcord.ui.Modal):
             await interaction.response.send_message(
                 f"❌ Произошла ошибка:\n```{exception}```", ephemeral=True
             )
+
+
+def setup(bot):
+    bot.add_cog(Punishments(bot))

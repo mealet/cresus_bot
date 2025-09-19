@@ -48,6 +48,11 @@ async def on_ready():
         status=config.PRESENCE_STATUS, activity=config.PRESENCE_ACTIVITY
     )
 
+    """Установка расширений с `on_ready()` слушателем"""
+    from src.cogs import applications
+
+    await applications.project_applications_setup(bot)
+
     logger.success(f"Bot started `{bot.user.name}`")
 
 
