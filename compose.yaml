@@ -1,7 +1,9 @@
 services:
   cresus_bot:
     build: .
+    working_dir: /app
+    network_mode: "host"
+    restart: unless-stopped
+    command: uv run main.py
     volumes:
       - ./database.db:/app/database.db
-    working_dir: /app
-    command: uv run main.py

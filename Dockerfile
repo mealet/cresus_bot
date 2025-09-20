@@ -12,4 +12,4 @@ RUN --mount=type=cache,target=/root/.cache/uv \
   uv sync --locked --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH"
-CMD ["uv", "run", "main.py"]
+CMD ["uv", "run", "python", "main.py"]
