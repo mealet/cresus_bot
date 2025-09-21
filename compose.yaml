@@ -7,3 +7,4 @@ services:
     command: uv run main.py
     volumes:
       - ./database.db:/app/database.db
+      - ./.logs:/app/.logs
