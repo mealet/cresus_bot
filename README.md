@@ -36,7 +36,7 @@ docker compose up -d
 ```
 
 ### Через uv
-1. Установите пакетный менеджер (uv)[https://docs.astral.sh/uv/]
+1. Установите пакетный менеджер [uv](https://docs.astral.sh/uv/)
 2. Синронизируйте зависимости:
 ```command
 uv sync
