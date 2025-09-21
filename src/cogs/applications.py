@@ -3,7 +3,6 @@ from src import config
 import nextcord
 import datetime
 
-from nextcord.ext import commands
 from loguru import logger
 
 """
